@@ -37,8 +37,8 @@ while (true) {
     playerCol = playerCol + 1; // เลื่อนขวา (คอลัมน์เพิ่มขึ้น)
   } else if (moov ==='a'){
     playerRow = playerRow - 1;
-  }else if (moov === 's'){
-    playerCol = playerCol  
+  }else if (moov === 'w'){
+    playerCol = playerCol - 1  
   }
   // (เว้น w กับ a ไว้ให้ลองเติมเองเพื่อฝึกฝนครับ!)
 
