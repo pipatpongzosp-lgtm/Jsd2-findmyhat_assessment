@@ -1,15 +1,10 @@
 <h1>Thinking process</h1>
-<p></p>
-<p></p>
-<p></p>
-<p></p>
-<p></p>
 
 
 มันคือกระดานประเภทหนึ่ง
 declare กระดาน[areawalk] หมาก[character] กับดัก[spawn] itemfind [คิดไม่ออกรอก่อน]
 defind
- - กระดาน ขนาด 12x12 และอัพเดตแมพได้ด้วย[เดินตกแล้ว? เดินออกแมพ? ตกหลุมแล้ว?]
+ - กระดาน ขนาด 5x5 และอัพเดตแมพได้ด้วย[เดินตกแล้ว? เดินออกแมพ? ตกหลุมแล้ว?]
  - หมาก จำนวน 1 ตัว
  - กับดัก จำนวน 1 อัน แบบสุ่ม
  - itemfind จำนวน 1 อัน สุ่มละกัน
@@ -26,22 +21,3 @@ defind
 
 
 
-
- 
-  //check state: canwalk
-  limitCoordinates(x, y) {
-    let canWalk = false;
-    if (0 < x < 5 && 0 < y < 5) {
-      console.log("walk");
-      canWalk = true;
-    }
-
-    //check status path
-    if (canWalk === false) {
-      console.log("you fall down !!!");
-    } else {
-      console.log("you safe");
-    }
-    return canWalk;
-  }
-}
