@@ -1,7 +1,7 @@
 import PromptSync from "prompt-sync";
-const prompt = PromptSync();
+const prompt = PromptSync({ sigint: true }); // เพิ่ม sigint ให้กด Ctrl+C ออกได้
 
-const chess = "👾";
+const chess = "👾"; // (ตัวนี้สร้างไว้แต่ยังไม่ได้ใช้ในแผนที่)
 const fieldBlock = "🧊";
 const pathWalk = "💠";
 const goal = "🪬";
@@ -15,24 +15,27 @@ let config = {
 
 class Field {
   _startPosition = {
-    x: null,
-    y: null,
+    x: 0, // เปลี่ยนจาก null เป็น 0 ไว้ก่อน
+    y: 0,
   };
+  
+  _map = []; // อย่าลืมประกาศตัวแปรเก็บแผนที่
+
   constructor(config) {
-    // this.width = config.width,
-    // this.height = config.height
-    // this.holePercentage = config.holePercentage
-    ((this.config = config), this.generateMap());
+    this.config = config;
+    this.generateMap();
+    this.findStartPosition(); // 🛑 เพิ่มบรรทัดนี้! เพื่อหาตำแหน่ง 💠 ทันทีที่สร้างแผนที่เสร็จ
   }
+
   generateMap() {
     const newMap = [];
     const mapSize = this.config.width * this.config.height;
     const holeCount = Math.floor((mapSize - 2) * this.config.holePercentage);
-    const fieldBlockCout = mapSize - holeCount - 2;
+    const fieldBlockCount = mapSize - holeCount - 2; // แก้ Cout เป็น Count
+
     const mapElements = [goal, pathWalk]
       .concat(Array(holeCount).fill(hole))
-      //เราทำการเชื่อม array หลุม กับ array ทางเดินเข้าด้วยกัน
-      .concat(Array(fieldBlockCout).fill(fieldBlock));
+      .concat(Array(fieldBlockCount).fill(fieldBlock));
 
     for (let i = 0; i < this.config.height; i++) {
       newMap[i] = [];
@@ -44,62 +47,81 @@ class Field {
     }
     this._map = newMap;
   }
+
+  findStartPosition() {
+    for (let x = 0; x < this.config.height; x++) {
+      for (let y = 0; y < this.config.width; y++) {
+        if (this._map[x][y] === pathWalk) {
+          this._startPosition.x = x;
+          this._startPosition.y = y;
+          return; 
+        }
+      }
+    }
+  }
+
   printMap() {
     console.clear();
-    console.log(
-      `Current position: {${this._startPosition.x},${this._startPosition.y}}\n`,
-    );
+    console.log(`Current position: {${this._startPosition.x}, ${this._startPosition.y}}\n`);
+    
+    // วาดตาราง
     for (let x = 0; x < this.config.height; x++) {
       let rowString = "";
-      for (let y = 0; y < this._width; y++) {
-        const currentItem = this._map[x][y].toString();
-        rowString += currentItem + " ";
+      for (let y = 0; y < this.config.width; y++) {
+        rowString += this._map[x][y] + " ";
       }
       console.log(rowString);
     }
+    console.log("\n");
   }
 
-  moovPlayer() {
-    let isPlaying = true; // ตัวแปรคอยคุมว่าเกมยังเล่นอยู่ไหม
+  play() {
+    let isPlaying = true;
+    
     while (isPlaying) {
-      // 1. พิมพ์แผนที่และพิกัดปัจจุบันออกมาก่อน
-      this.printMapWithoutColor();
-      // 2. รับคำสั่งจากผู้เล่น (แปลงเป็นตัวพิมพ์เล็กให้หมดด้วย .toLowerCase())
+      this.printMap();
+
       let move = prompt("เดินไปทางไหน? (w=บน, s=ล่าง, a=ซ้าย, d=ขวา): ");
+      if (!move) continue; 
       move = move.toLowerCase();
-      // 3. เตรียมตัวแปรจำลองตำแหน่งล่วงหน้า
-      let nextX = this._playerPosition.x;
-      let nextY = this._playerPosition.y;
 
+      let nextX = this._startPosition.x;
+      let nextY = this._startPosition.y;
 
-      if (move === "s") {
-        playerRow = playerRow + 1; // เลื่อนลง (แถวเพิ่มขึ้น)
-      } else if (move === "d") {
-        playerCol = playerCol + 1; // เลื่อนขวา (คอลัมน์เพิ่มขึ้น)
-      } else if (move === "a") {
-        playerRow = playerRow - 1; // เลื่อนซ้าย
-      } else if (move === "w") {
-        playerCol = playerCol - 1; // เลื่อนขึ้น
-      }
-      if (
-        nextX < 0 ||
-        nextY < 0 ||
-        nextX >= this.config.height ||
-        nextY >= this.config.width
-      ) {
-        console.log("ชนขอบ! เดินไปทางนั้นไม่ได้นะ");
-        // เพื่อให้เห็นข้อความชนขอบ เราอาจจะให้ prompt รอให้เรากด enter รับทราบ
+      if (move === "s") nextX++;
+      else if (move === "w") nextX--;
+      else if (move === "a") nextY--;
+      else if (move === "d") nextY++;
+      else {
+        console.log("กดผิดปุ่มครับ! ใช้ w, a, s, d เท่านั้น");
         prompt("กด Enter เพื่อไปต่อ...");
         continue;
       }
-      // 6. อัปเดตตำแหน่งจริง!
-      this._playerPosition.x = nextX;
-      this._playerPosition.y = nextY;
+
+      if (nextX < 0 || nextY < 0 || nextX >= this.config.height || nextY >= this.config.width) {
+        console.log("ชนขอบ! เดินไปทางนั้นไม่ได้นะ");
+        prompt("กด Enter เพื่อไปต่อ...");
+        continue;
+      }
+
+      const nextItem = this._map[nextX][nextY];
+      
+      if (nextItem === hole) {
+        console.log("อ๊ากกก ตกหลุม 🕳️! --- GAME OVER ---");
+        isPlaying = false; 
+        break;
+      } else if (nextItem === goal) {
+        console.log("เย้! เจอเป้าหมายแล้ว 🪬! --- YOU WIN ---");
+        isPlaying = false; 
+        break;
+      }
+
+      this._startPosition.x = nextX;
+      this._startPosition.y = nextY;
+      this._map[nextX][nextY] = pathWalk;
     }
   }
 }
-// class game {
 
-// }
-const myGame = new Field(config); // สร้างเกมใหม่โดยโยน config เข้าไป
-myGame.printMap(); // สั่งให้พิมพ์แผนที่ออกมา
+const myGame = new Field(config);
+myGame.play();
