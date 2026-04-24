@@ -1,0 +1,16 @@
+{
+  "name": "findmybrain",
+  "version": "1.0.0",
+  "description": "<h1>Thinking process</h1>\r <p></p>\r <p></p>\r <p></p>\r <p></p>\r <p></p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "prompt-sync": "^4.2.0"
+  }
+}
