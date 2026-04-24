@@ -1,11 +1,11 @@
 import PromptSync from "prompt-sync";
 const prompt = PromptSync({ sigint: true }); // เพิ่ม sigint ให้กด Ctrl+C ออกได้
 
-const chess = "👾"; // (ตัวนี้สร้างไว้แต่ยังไม่ได้ใช้ในแผนที่)
-const fieldBlock = "🧊";
-const pathWalk = "💠";
-const goal = "🪬";
-const hole = "🕳️";
+const playerChar = "@"; // "ตัวละครปัจจุบัน" 
+const pathWalk = "*";   // รอยเท้าที่ทิ้งไว้
+const fieldBlock = "░"; // พื้นน้ำแข็ง
+const goal = "^";       // เป้าหมาย
+const hole = "O";       // หลุม
 
 let config = {
   width: 5,
@@ -15,37 +15,57 @@ let config = {
 
 class Field {
   _startPosition = {
-    x: 0, // เปลี่ยนจาก null เป็น 0 ไว้ก่อน
+    x: 0, // 
     y: 0,
   };
   
-  _map = []; // อย่าลืมประกาศตัวแปรเก็บแผนที่
+  _map = [];
 
   constructor(config) {
     this.config = config;
     this.generateMap();
-    this.findStartPosition(); // 🛑 เพิ่มบรรทัดนี้! เพื่อหาตำแหน่ง 💠 ทันทีที่สร้างแผนที่เสร็จ
+    this.findStartPosition(); 
   }
 
-  generateMap() {
-    const newMap = [];
+ generateMap() {
+    // 1. ปูพื้นแผนที่ด้วย "น้ำแข็ง" 🧊 ทั้งหมดก่อน
+    this._map = [];
+    for (let x = 0; x < this.config.height; x++) {
+      let row = [];
+      for (let y = 0; y < this.config.width; y++) {
+        row.push(fieldBlock);
+      }
+      this._map.push(row);
+    }
+
+    // --- ฟังก์ชันเสริม: สุ่มหา "ช่องว่าง"
+    const getRandomEmptyPosition = () => {
+      let rx, ry;
+      do {
+        rx = Math.floor(Math.random() * this.config.height);
+        ry = Math.floor(Math.random() * this.config.width);
+      } while (this._map[rx][ry] !== fieldBlock); // ถ้าช่องนั้นโดนทับไปแล้ว ให้สุ่มหาพิกัดใหม่
+      return { x: rx, y: ry };
+    };
+
+  
+    const playerPos = getRandomEmptyPosition();
+    this._map[playerPos.x][playerPos.y] = pathWalk;
+
+    this._startPosition.x = playerPos.x;
+    this._startPosition.y = playerPos.y;
+
+   
+    const goalPos = getRandomEmptyPosition();
+    this._map[goalPos.x][goalPos.y] = goal;
+
+    
     const mapSize = this.config.width * this.config.height;
     const holeCount = Math.floor((mapSize - 2) * this.config.holePercentage);
-    const fieldBlockCount = mapSize - holeCount - 2; // แก้ Cout เป็น Count
-
-    const mapElements = [goal, pathWalk]
-      .concat(Array(holeCount).fill(hole))
-      .concat(Array(fieldBlockCount).fill(fieldBlock));
-
-    for (let i = 0; i < this.config.height; i++) {
-      newMap[i] = [];
-      for (let r = 0; r < this.config.width; r++) {
-        const rand = Math.floor(Math.random() * mapElements.length);
-        newMap[i].push(mapElements[rand]);
-        mapElements.splice(rand, 1);
-      }
+    for (let i = 0; i < holeCount; i++) {
+      const holePos = getRandomEmptyPosition();
+      this._map[holePos.x][holePos.y] = hole;
     }
-    this._map = newMap;
   }
 
   findStartPosition() {
@@ -60,7 +80,7 @@ class Field {
     }
   }
 
-  printMap() {
+ printMap() {
     console.clear();
     console.log(`Current position: {${this._startPosition.x}, ${this._startPosition.y}}\n`);
     
@@ -68,13 +88,18 @@ class Field {
     for (let x = 0; x < this.config.height; x++) {
       let rowString = "";
       for (let y = 0; y < this.config.width; y++) {
-        rowString += this._map[x][y] + " ";
+        
+        if (x === this._startPosition.x && y === this._startPosition.y) {
+          rowString += playerChar + " "; 
+        } else {
+          rowString += this._map[x][y] + " "; 
+        }
+        
       }
       console.log(rowString);
     }
     console.log("\n");
   }
-
   play() {
     let isPlaying = true;
     
